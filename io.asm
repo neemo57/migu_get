@@ -15,6 +15,7 @@ strlen:
 
 	MOV eax, -1
 	SUB eax, ecx
+	DEC eax
 
 	MOV esp, ebp
 	POP ebp
@@ -41,13 +42,13 @@ strprint:
 
 ; Ask for a string input from the user and place the string into the buffer
 ; Calling format:
-; strinput(void* buffer, int buffer_size)
+; strinput(int buffer_size, void* buffer)
 strinput:
 	PUSH ebp
 	MOV ebp, esp
 
-	MOV ecx, [ebp + 0x8]
-	MOV edx, [ebp + 0xC]
+	MOV edx, [ebp + 0x8] ; The buffer size
+	MOV ecx, [ebp + 0xC] ; The buffer pointer
 
 	; Call the sread function
 	MOV ebx, 0x0
@@ -206,3 +207,35 @@ inttostr:
 	MOV esp, ebp
 	POP ebp
 	RET
+
+; newline to nullbyte
+; convert newline terminated string to null terminated string
+; usage: newline_to_nullbyte(void* buffer)
+
+newline_to_nullbyte:
+	 PUSH ebp
+	 MOV ebp, esp
+
+	 ; Get the buffer
+	 MOV esi, [ebp + 0x8]
+
+	 XOR al, al
+
+;Loop and update the first newline found
+.newline_to_nullbyte_loop:
+	LODSB
+	CMP al, 0xA
+	JZ .newline_found
+
+	CMP al, 0x0
+	JZ .newline_to_nullbyte.done
+
+	JMP .newline_to_nullbyte_loop
+
+.newline_found:
+	MOV byte [esi-1], 0x0
+
+.newline_to_nullbyte.done:
+	 MOV esp, ebp
+	 POP ebp
+	 RET
